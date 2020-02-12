@@ -141,52 +141,57 @@ if __name__ == "__main__":
         torch.multiprocessing.set_start_method('spawn')    
     except:
         pass
-
-    positive_class = 0
-
-    # CUDA for PyTorch
-    use_cuda = torch.cuda.is_available()
-    device = torch.device("cuda:0" if use_cuda else "cpu")
-    torch.cuda.empty_cache()   
-
-    #%% Create Model
-    try:
-        model
-    except:
-        model = Net()
-        model = model.to(device)
-        print("Loaded model.")
-
-
-    #%% Create datasets
-    try:
-        train_dataset
-    except:
-        train_dataset  = Im_Dataset(mode = "train",class_num = positive_class, class_balance = True)
-        val_dataset = Im_Dataset(mode = "val")
-        datasets = {"train":train_dataset, "val": val_dataset}
-        print("Loaded datasets.")
     
-    start_epoch = -1
-    num_epochs = 200
+    for positive_class in range(0,6):
+    #positive_class = 0
 
-    #loss = torch.nn.MSELoss()
-    loss = nn.BCELoss()
-    #loss = weightedBCELoss()
-
-    optimizer = optim.SGD(model.parameters(), lr= 0.03,momentum = 0.1)    
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer,factor = 0.3, mode = "max", patience = 2,verbose=True)
-
-    checkpoint = None
-    #checkpoint = "/content/drive/My Drive/Colab Notebooks/ISIC-2018-classifiers/ResNet_5.pt"
-    if checkpoint:
-      model,optimizer,start_epoch,all_losses,all_accs = load_model(checkpoint,model, optimizer)
-      print("Reloaded checkpoint {}.".format(checkpoint))
-    if True:    
-    # train model
-        print("Beginning training on {}.".format(device))
-        model,all_losses = train_model(model,  optimizer, scheduler,
-                            loss, datasets,positive_class,device,
-                            num_epochs, start_epoch+1,all_losses= None,all_accs= None)
-  
-    # if things go badly awry, get rid of weighting and replace softmax in network
+        # CUDA for PyTorch
+        use_cuda = torch.cuda.is_available()
+        device = torch.device("cuda:0" if use_cuda else "cpu")
+        torch.cuda.empty_cache()   
+    
+        #%% Create Model
+        try:
+            model
+        except:
+            model = Net()
+            model = model.to(device)
+            print("Loaded model.")
+    
+    
+        #%% Create datasets
+        try:
+            train_dataset
+        except:
+            train_dataset  = Im_Dataset(mode = "train",class_num = positive_class, class_balance = True)
+            val_dataset = Im_Dataset(mode = "val")
+            datasets = {"train":train_dataset, "val": val_dataset}
+            print("Loaded datasets.")
+        
+        start_epoch = -1
+        num_epochs = 200
+    
+        #loss = torch.nn.MSELoss()
+        loss = nn.BCELoss()
+        #loss = weightedBCELoss()
+    
+        optimizer = optim.SGD(model.parameters(), lr= 0.03,momentum = 0.1)    
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer,factor = 0.3, mode = "max", patience = 2,verbose=True)
+    
+        checkpoint = None
+        if positive_class == 0:
+            checkpoint = "/home/worklab/Documents/Derek/Classification-ISIC-2018/class0_epoch18.pt"
+        elif positive_class == 1:
+            checkpoint = "/home/worklab/Documents/Derek/Classification-ISIC-2018/class1_epoch0.pt"
+        if checkpoint:
+          model,optimizer,start_epoch,all_losses,all_accs = load_model(checkpoint,model, optimizer)
+          print("Reloaded checkpoint {}.".format(checkpoint))
+        if True:    
+        # train model
+            print("Beginning training on {}.".format(device))
+            model,all_losses = train_model(model,  optimizer, scheduler,
+                                loss, datasets,positive_class,device,
+                                num_epochs, start_epoch+1,all_losses= None,all_accs= None)
+        del model
+        torch.cuda.empty_cache()
+        # if things go badly awry, get rid of weighting and replace softmax in network
