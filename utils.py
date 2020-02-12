@@ -326,4 +326,54 @@ class weightedBCELoss(nn.Module):
 
         bce = torch.mul(weights_norm,preds.log())  + 0.1667*torch.mul(1-target,(1-preds).log()) # supress negative labels to prevent negative overwhelming
         return -torch.sum(bce) /(preds.shape[0]*preds.shape[1])
-        
+
+
+
+def binary_confusion_vectors(counts,cls):
+    """
+    Plots binary confusion matrix for binary classifier
+    counts - 2 x num_classes numpy array of raw counts (correct incorrect)
+    cls - int, for title of plots
+    """
+    class_labels = [0,1,2,3,4,5,6]
+    sums = np.sum(counts,axis= 0)
+    percentages = np.round(counts/sums * 100)
+   
+    fig, ax = plt.subplots(2,1,figsize = (10,3.3))
+    # plot correct items
+    ax0_data = percentages[0,np.newaxis]
+    im = ax[0].imshow(ax0_data,cmap = "YlGn", aspect = "auto")
+    ax[0].set_yticks(np.arange(1))
+    ax[0].set_yticklabels(["Correct"],fontsize = 20)
+    # Loop over data dimensions and create text annotations.
+    for j in range(len(class_labels)):
+        text = ax[0].text(j, 0, counts[0, j],
+                   ha="center", va="bottom", color="k",fontsize = 20)
+        text = ax[0].text(j, 0, str(percentages[0, j])+"%",
+                 ha="center", va="top", color="k",fontsize = 14)
+   
+    # plot incorrect items
+    ax1_data = percentages[1,np.newaxis]
+    im = ax[1].imshow(ax1_data,cmap = "YlOrRd", aspect = "auto")
+    ax[1].set_yticks(np.arange(1))
+    ax[1].set_yticklabels(["Incorrect"],fontsize = 20)
+    plt.setp(ax[1].get_xticklabels(), rotation=45, ha="right",
+             rotation_mode="anchor")
+   
+    # Loop over data dimensions and create text annotations.
+    for j in range(len(class_labels)):
+        text = ax[1].text(j, 0, counts[1, j],
+                       ha="center", va="bottom", color="k",fontsize = 20)
+        text = ax[1].text(j, 0, str(percentages[1, j])+"%",
+                       ha="center", va="top", color="k",fontsize = 14)
+           
+    ax[0].set_title("Class {}".format(cls),fontsize = 20)
+    #ax[1].set_xlabel("Class",fontsize = 20)
+    fig.tight_layout(h_pad = -2)
+    plt.show()
+   
+counts = np.array([[10, 12, 6, 3, 0, 6, 20],
+                [1, 4, 8, 1, 2, 6, 3]])
+binary_confusion_matrix(counts,1)
+
+         

@@ -112,9 +112,9 @@ def train_model(model, optimizer, scheduler,loss_function,
                   all_accs[phase].append(avg_acc)
 
                   # plot metrics
-                  plt.figure()
-                  plt.plot(all_losses[phase])
-                  plt.plot(all_accs[phase])
+#                  plt.figure()
+#                  plt.plot(all_losses[phase])
+#                  plt.plot(all_accs[phase])
 
                   # save a checkpoint
                   PATH = "class{}_epoch{}.pt".format(positive_class,epoch)
@@ -148,13 +148,21 @@ if __name__ == "__main__":
         # CUDA for PyTorch
         use_cuda = torch.cuda.is_available()
         device = torch.device("cuda:0" if use_cuda else "cpu")
+        if torch.cuda.device_count() > 1 and positive_class > 0:
+            print("Using multiple GPUs")
+            MULTI = True
+        else:
+            MULTI = False
         torch.cuda.empty_cache()   
+        
     
         #%% Create Model
         try:
             model
         except:
             model = Net()
+            if MULTI:
+                model = nn.DataParallel(model)
             model = model.to(device)
             print("Loaded model.")
     
@@ -169,7 +177,7 @@ if __name__ == "__main__":
             print("Loaded datasets.")
         
         start_epoch = -1
-        num_epochs = 200
+        num_epochs = 50
     
         #loss = torch.nn.MSELoss()
         loss = nn.BCELoss()
@@ -181,17 +189,20 @@ if __name__ == "__main__":
         checkpoint = None
         if positive_class == 0:
             checkpoint = "/home/worklab/Documents/Derek/Classification-ISIC-2018/class0_epoch18.pt"
-        elif positive_class == 1:
-            checkpoint = "/home/worklab/Documents/Derek/Classification-ISIC-2018/class1_epoch0.pt"
+#        elif positive_class == 1:
+#            checkpoint = "/home/worklab/Documents/Derek/Classification-ISIC-2018/class1_epoch0.pt"
         if checkpoint:
           model,optimizer,start_epoch,all_losses,all_accs = load_model(checkpoint,model, optimizer)
           print("Reloaded checkpoint {}.".format(checkpoint))
         if True:    
         # train model
             print("Beginning training on {}.".format(device))
-            model,all_losses = train_model(model,  optimizer, scheduler,
+            model,all_losses,all_accs = train_model(model,  optimizer, scheduler,
                                 loss, datasets,positive_class,device,
                                 num_epochs, start_epoch+1,all_losses= None,all_accs= None)
         del model
+        del train_dataset
+        del val_dataset
         torch.cuda.empty_cache()
+        
         # if things go badly awry, get rid of weighting and replace softmax in network
