@@ -104,6 +104,7 @@ def train_model(model, optimizer, scheduler,loss_function,
                     if count % 10 == 0:
                       print("{} epoch {} batch {} -- Loss: {:03f} -- Accuracy {:02f}".format(phase,epoch,count,loss.item(),acc))
                 
+                print(count)
                 avg_acc = total_acc/count
                 avg_loss = total_loss/count
                 if epoch % 1 == 0:
@@ -142,7 +143,7 @@ if __name__ == "__main__":
     except:
         pass
     
-    for positive_class in range(0,6):
+    for positive_class in range(2,3):
     #positive_class = 0
 
         # CUDA for PyTorch

@@ -72,6 +72,7 @@ class Im_Dataset(data.Dataset):
         self.labels = {}
         self.im_dir = "/home/worklab/Desktop/ISIC2018_Task3_Training_Input"
         self.im_list = []
+        self.all_train_indices = []
         self.train_indices = []
         self.val_indices = []
 
@@ -119,10 +120,8 @@ class Im_Dataset(data.Dataset):
           self.class_indices.append(indices)
 
         for indices in self.class_indices:
-            for idx in indices[:int(len(indices)*0.85)]:
-              self.train_indices.append(idx)
-            for idx in indices[int(len(indices)*0.85):]:
-              self.val_indices.append(idx)
+            self.all_train_indices.append(indices[:int(len(indices)*0.85)])
+            self.val_indices.append(indices[int(len(indices)*0.85):])
         
         if class_balance: # balances positive and negative examples in training data
             self.shuffle_balance()
@@ -150,18 +149,18 @@ class Im_Dataset(data.Dataset):
       """
 
       # get number of positives
-      pos = int(len(self.class_indices[self.class_num]))
+      pos = int(len(self.all_train_indices[self.class_num]))
       neg = len(self.im_list) - pos
 
       # get random positive indices ordering
-      pos_indices = self.class_indices[self.class_num].copy()
+      pos_indices = self.all_train_indices[self.class_num].copy()
       random.shuffle(pos_indices)
 
       # get random negative indices ordering
       neg_indices = []
-      for cls in range(len(self.class_indices)):
+      for cls in range(len(self.all_train_indices)):
         if cls != self.class_num:
-          for idx in self.class_indices[cls]:
+          for idx in self.all_train_indices[cls]:
             neg_indices.append(idx)
       random.shuffle(neg_indices)
       
@@ -372,8 +371,5 @@ def binary_confusion_vectors(counts,cls):
     fig.tight_layout(h_pad = -2)
     plt.show()
    
-counts = np.array([[10, 12, 6, 3, 0, 6, 20],
-                [1, 4, 8, 1, 2, 6, 3]])
-binary_confusion_matrix(counts,1)
 
          
