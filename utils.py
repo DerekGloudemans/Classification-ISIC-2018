@@ -73,6 +73,7 @@ class Im_Dataset(data.Dataset):
         self.im_dir = "/home/worklab/Desktop/ISIC2018_Task3_Training_Input"
         self.im_list = []
         self.all_train_indices = []
+        self.all_val_indices = []
         self.train_indices = []
         self.val_indices = []
 
@@ -121,8 +122,12 @@ class Im_Dataset(data.Dataset):
 
         for indices in self.class_indices:
             self.all_train_indices.append(indices[:int(len(indices)*0.85)])
-            self.val_indices.append(indices[int(len(indices)*0.85):])
+            self.all_val_indices.append(indices[int(len(indices)*0.85):])
         
+        # flatten val_indices
+        for cls in self.all_val_indices:
+            for idx in cls:
+                self.val_indices.append(idx)
         if class_balance: # balances positive and negative examples in training data
             self.shuffle_balance()
 

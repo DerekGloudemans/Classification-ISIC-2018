@@ -44,7 +44,11 @@ def train_model(model, optimizer, scheduler,loss_function,
                   "val":[]
                   }
         avg_acc = 0
-
+        
+        # for early stopping
+        best_acc  = 0
+        epochs_since_improvement = 0
+        
         # create testloader for val_dataset (trainloader is made each epoch)
         params = {'batch_size': 12,
               'shuffle': True,
@@ -101,10 +105,9 @@ def train_model(model, optimizer, scheduler,loss_function,
                     count += 1
                     total_acc += acc
                     total_loss += loss.item()
-                    if count % 10 == 0:
+                    if count % 20 == 0:
                       print("{} epoch {} batch {} -- Loss: {:03f} -- Accuracy {:02f}".format(phase,epoch,count,loss.item(),acc))
                 
-                print(count)
                 avg_acc = total_acc/count
                 avg_loss = total_loss/count
                 if epoch % 1 == 0:
@@ -128,7 +131,16 @@ def train_model(model, optimizer, scheduler,loss_function,
                       }, PATH)
                   
                 torch.cuda.empty_cache()
-
+                
+                # stop training when there is no further improvement
+                if avg_acc > best_acc:
+                    epochs_since_improvement = 0
+                    best_acc = avg_acc
+                else:
+                    epochs_since_improvement +=1
+                
+                if epochs_since_improvement >= 5:
+                    break
                 
         return model , all_losses,all_accs
 
@@ -143,7 +155,7 @@ if __name__ == "__main__":
     except:
         pass
     
-    for positive_class in range(2,3):
+    for positive_class in [0,1,2,3,4,5,6]:
     #positive_class = 0
 
         # CUDA for PyTorch
@@ -185,13 +197,10 @@ if __name__ == "__main__":
         #loss = weightedBCELoss()
     
         optimizer = optim.SGD(model.parameters(), lr= 0.03,momentum = 0.1)    
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer,factor = 0.3, mode = "max", patience = 2,verbose=True)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer,factor = 0.3, mode = "max", patience = 1,verbose=True)
     
         checkpoint = None
-        if positive_class == 0:
-            checkpoint = "/home/worklab/Documents/Derek/Classification-ISIC-2018/class0_epoch18.pt"
-#        elif positive_class == 1:
-#            checkpoint = "/home/worklab/Documents/Derek/Classification-ISIC-2018/class1_epoch0.pt"
+        
         if checkpoint:
           model,optimizer,start_epoch,all_losses,all_accs = load_model(checkpoint,model, optimizer)
           print("Reloaded checkpoint {}.".format(checkpoint))
