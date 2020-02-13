@@ -51,3 +51,6 @@ plt.plot(all_accs['train'])
 plt.plot(all_accs['val'])
 plt.legend(["Train acc","Val acc"])
 plt.show()
+
+print("Best epoch for val loss: {}".format(np.argmax(all_losses['val'])))
+print("Best epoch for accuracy: {}".format(np.argmax(all_accs['val'])))

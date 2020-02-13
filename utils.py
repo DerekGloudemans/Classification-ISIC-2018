@@ -155,7 +155,7 @@ class Im_Dataset(data.Dataset):
 
       # get number of positives
       pos = int(len(self.all_train_indices[self.class_num]))
-      neg = len(self.im_list) - pos
+      neg = sum([len(cls) for cls in self.all_train_indices]) -pos
 
       # get random positive indices ordering
       pos_indices = self.all_train_indices[self.class_num].copy()
@@ -376,5 +376,57 @@ def binary_confusion_vectors(counts,cls):
     fig.tight_layout(h_pad = -2)
     plt.show()
    
+def get_metrics(confusion_matrix):
+    
+    #plot confusion matrix
+    sums = np.sum(confusion_matrix,axis= 0)
+    sumss = sums[:,np.newaxis]
+    sumss = np.repeat(sumss,7,1)#.transpose()
+    sumss = np.transpose(sumss)
+    percentages = np.round(confusion_matrix/sumss * 100)
+    
+    fig, ax = plt.subplots(figsize = (10,10))
+    im = ax.imshow(percentages,cmap = "YlGn")
+    
+    classes = ['0:MEL', '1:NV', '2:BCC', '3:AKIEC', '4:BKL', '5:DF', '6:VASC']
+    # We want to show all ticks...
+    ax.set_xticks(np.arange(len(classes)))
+    ax.set_yticks(np.arange(len(classes)))
+    # ... and label them with the respective list entries
+    ax.set_xticklabels(classes)
+    ax.set_yticklabels(classes)
+    ax.set_ylim(len(classes)-0.5, -0.5)
+    # Rotate the tick labels and set their alignment.
+    plt.setp(ax.get_xticklabels(), rotation=0, ha="center",
+             rotation_mode="anchor")
+    plt.setp(ax.get_yticklabels(), rotation=0, va="center",
+         rotation_mode="anchor")
+    
+    # Loop over data dimensions and create text annotations.
+    for i in range(len(classes)):
+        for j in range(len(classes)):
+            text = ax.text(j, i, confusion_matrix[i, j],
+                       ha="center", va="bottom", color="k",fontsize = 20)
+            text = ax.text(j, i, str(percentages[i, j])+"%",
+                       ha="center", va="top", color="k",fontsize = 14)
+    
+    ax.set_title("Test Data Confusion Matrix",fontsize = 20)
+    ax.set_xlabel("Actual",fontsize = 20)
+    ax.set_ylabel("Predicted",fontsize = 20)
+    plt.show()
+    
+    # get overall accuracy
+    correct = sum([confusion_matrix[i,i] for i in range(0,7)])
+    total = np.sum(confusion_matrix)
+    accuracy = correct/total
+    print("Test accuracy: {}%".format(accuracy*100))
 
-         
+    # get per-class recall (correct per class/ number of items in this class)    
+    correct_per_class = np.array([confusion_matrix[i,i] for i in range(0,7)])
+    recall = correct_per_class/sums
+    
+    total_preds_per_class = np.sum(confusion_matrix,axis= 1)
+    precision = correct_per_class/total_preds_per_class
+    
+    return accuracy,recall,precision
+

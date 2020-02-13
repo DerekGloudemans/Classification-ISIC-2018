@@ -46,7 +46,7 @@ def train_model(model, optimizer, scheduler,loss_function,
         avg_acc = 0
         
         # for early stopping
-        best_acc  = 0
+        best_loss = np.inf
         epochs_since_improvement = 0
         
         # create testloader for val_dataset (trainloader is made each epoch)
@@ -56,7 +56,7 @@ def train_model(model, optimizer, scheduler,loss_function,
               'drop_last' : True
               }
         testloader = data.DataLoader(datasets["val"],**params)
-
+        
         for epoch in range(start_epoch,num_epochs):
             # reshuffle dataset to get new set of positives or negatives
             if datasets["train"].class_balance:
@@ -132,16 +132,18 @@ def train_model(model, optimizer, scheduler,loss_function,
                   
                 torch.cuda.empty_cache()
                 
-                # stop training when there is no further improvement
-                if avg_acc > best_acc:
-                    epochs_since_improvement = 0
-                    best_acc = avg_acc
-                else:
-                    epochs_since_improvement +=1
-                
-                if epochs_since_improvement >= 5:
-                    break
-                
+            # stop training when there is no further improvement
+            if avg_loss < best_loss:
+                epochs_since_improvement = 0
+                best_loss = avg_loss
+            else:
+                epochs_since_improvement +=1
+           
+            if epochs_since_improvement >= 3:
+                checkpoint = "class{}_epoch{}.pt".format(positive_class,epoch-3)
+                model,_,_,_,_ = load_model(checkpoint,model, optimizer)
+                epochs_since_improvement = 0
+                print("Reloaded checkpoint {}".format(checkpoint))
         return model , all_losses,all_accs
 
 
@@ -161,13 +163,13 @@ if __name__ == "__main__":
         # CUDA for PyTorch
         use_cuda = torch.cuda.is_available()
         device = torch.device("cuda:0" if use_cuda else "cpu")
-        if torch.cuda.device_count() > 1 and positive_class > 0:
+        if torch.cuda.device_count() > 1:
             print("Using multiple GPUs")
             MULTI = True
         else:
             MULTI = False
         torch.cuda.empty_cache()   
-        
+        #MULTI = False
     
         #%% Create Model
         try:
@@ -196,11 +198,11 @@ if __name__ == "__main__":
         loss = nn.BCELoss()
         #loss = weightedBCELoss()
     
-        optimizer = optim.SGD(model.parameters(), lr= 0.03,momentum = 0.1)    
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer,factor = 0.3, mode = "max", patience = 1,verbose=True)
+        optimizer = optim.SGD(model.parameters(), lr= 0.0003,momentum = 0.3)    
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer,factor = 0.3, mode = "max", patience = 2,verbose=True)
     
+
         checkpoint = None
-        
         if checkpoint:
           model,optimizer,start_epoch,all_losses,all_accs = load_model(checkpoint,model, optimizer)
           print("Reloaded checkpoint {}.".format(checkpoint))
