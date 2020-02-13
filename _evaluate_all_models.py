@@ -241,7 +241,7 @@ class Multi_Net(nn.Module):
 
     def forward(self, x):
         x = self.features(x)
-        x = self.batchnorm(x)
+        x = F.relu(self.batchnorm(x))
 
         x = F.relu(self.fc1(x))
         x = self.drop(x)
