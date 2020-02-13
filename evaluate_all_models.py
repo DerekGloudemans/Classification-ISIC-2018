@@ -28,6 +28,7 @@ import _pickle as pickle
 import random
 import copy
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import math
 
 from sklearn.tree import DecisionTreeClassifier
@@ -391,7 +392,33 @@ def generate_features(model_list,dataset,device):
 
   return features, labels
 
+def plot_all_losses(model_list):
+    """
+    Takes in a bunch of checkpoints and names and plots all losses together
+    """
+    plt.style.use('ggplot')
+    print ("plotting losses")
+    colors = list(mcolors.TABLEAU_COLORS)
+    all_labels = []
+    plt.figure()
+    for i,model in enumerate(model_list):
+        checkpoint = model['checkpoint']
+        checkpoint = torch.load(checkpoint)
+        train_loss = checkpoint['losses']['train']
+        val_loss = checkpoint['losses']['val']
+        label = model['name']
+        plt.plot(train_loss,color = colors[i])
+        plt.plot(val_loss, '--', color = colors[i])
+        all_labels.append(label+" train")
+        all_labels.append(label+" val")
+        
+    plt.xlabel("Epoch",fontsize = 20)
+    plt.ylabel("Total Loss per Epoch",fontsize = 20)
+    plt.title("Total Loss per Epoch",fontsize = 20)
+    plt.legend(all_labels,fontsize = 16)
+    plt.show()
 
+        
 if __name__ == "__main__":
         try:
             torch.multiprocessing.set_start_method('spawn')    
@@ -446,7 +473,23 @@ if __name__ == "__main__":
             confusion_matrix[output,label]+=1
             
         
-        a,r,p = get_metrics(confusion_matrix)
+        #a,r,p = get_metrics(confusion_matrix)
         print("Model test accuracy: {}%".format(a*100))
         print("Model test recall (per class): {}".format(recall))
         print("Model test precision (per class): {}".format(precision))
+    
+    
+    
+        model_list = [
+            {"name":"6vA", "outputs":1,                 "checkpoint":"final_checkpoints/all_6vA.pt"},
+            {"name":"Weighted Multiclass", "outputs":7, "checkpoint":"final_checkpoints/final_weighted_multiclass.pt" },
+            {"name":"Balanced Multiclass", "outputs":7, "checkpoint":"final_checkpoints//final_balanced_multiclass.pt" },
+            {"name":"4v3", "outputs":1,                 "checkpoint":"final_checkpoints/final_5v0.pt" },
+            {"name":"5v0", "outputs":1,                 "checkpoint":"final_checkpoints/final_4v3.pt"},
+            {"name":"4v2", "outputs":1,                 "checkpoint":"final_checkpoints/final_4v2.pt"},
+            {"name":"2vA", "outputs":1,                 "checkpoint":"final_checkpoints/all_2vA.pt"},
+            {"name":"3vA", "outputs":1,                 "checkpoint":"final_checkpoints/all_3vA.pt"},
+            {"name":"4vA", "outputs":1,                 "checkpoint":"final_checkpoints/all_4vA.pt"},
+            {"name":"5vA", "outputs":1,                 "checkpoint":"final_checkpoints/final_5vA.pt"}
+              ]
+        plot_all_losses(model_list)
