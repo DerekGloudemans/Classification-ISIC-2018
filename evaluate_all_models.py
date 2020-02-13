@@ -216,8 +216,9 @@ class Im_Dataset(data.Dataset):
         im = im.copy()
         cv2.putText(im,label,(20,40),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
         #plot label
-        im = im.copy()*255
+        im = im.copy()#*255
         cv2.imshow("frame",im)
+        cv2.imwrite("im{}.png".format(idx),im)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
         
