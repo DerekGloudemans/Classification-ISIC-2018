@@ -1,9 +1,10 @@
-# imports
-
-# this seems to be a popular thing to do so I've done it here
-#from __future__ import print_function, division
-
-
+"""
+This file loads all models, uses them to predict features on validation data,
+and then uses the output features to fit a decision tree ensemble classifier.
+Then, it loads the test images, loads each model to predict features, and
+then uses the decision tree ensemble classifier to predict outputs. Finally,
+it generates a confusion matrix for the test data and reports metrics
+"""
 # torch and specific torch packages for convenience
 import torch
 import torch.nn.functional as F
@@ -32,7 +33,7 @@ import matplotlib.colors as mcolors
 import math
 
 from sklearn.tree import DecisionTreeClassifier
-from utils import get_metrics
+from _utils import get_metrics
 
 class Im_Dataset(data.Dataset):
     """
@@ -431,6 +432,8 @@ if __name__ == "__main__":
         device = torch.device("cuda:0" if use_cuda else "cpu")
         torch.cuda.empty_cache()   
     
+        # load validation dataset and generate features from all models
+        dataset = Im_Dataset(mode = "val")
         model_list = [
             {"name":"6vA", "outputs":1,                 "checkpoint":"final_checkpoints/final_6vA.pt"},
             {"name":"Weighted Multiclass", "outputs":7, "checkpoint":"final_checkpoints/final_weighted_multiclass.pt" },
@@ -443,10 +446,6 @@ if __name__ == "__main__":
             {"name":"4vA", "outputs":1,                 "checkpoint":"final_checkpoints/final_4vA.pt"},
             {"name":"5vA", "outputs":1,                 "checkpoint":"final_checkpoints/final_5vA.pt"}
               ]
-        
-        #dataset = Im_Dataset(mode = "train")
-        #train_features, train_labels = generate_features(model_list,dataset,device)
-        dataset = Im_Dataset(mode = "val")
         try:
             val_features
         except:
@@ -462,25 +461,26 @@ if __name__ == "__main__":
             test_features
         except:
             test_features, test_labels = generate_features(model_list,dataset,device)
-            
+        
+        # predict outputs
         outputs  = tree.predict(test_features)
-        condensed_labels = np.argmax(test_labels,axis = 1)
-
+       
         # row is pred, col is true
+        condensed_labels = np.argmax(test_labels,axis = 1)
         confusion_matrix = np.zeros([7,7])
         for i in range(len(test_labels)):
             label = condensed_labels[i]
             output = outputs[i]
             confusion_matrix[output,label]+=1
             
-        
-        #a,r,p = get_metrics(confusion_matrix)
+        # print out metrics and generate confusion matrix
+        a,r,p = get_metrics(confusion_matrix)
         print("Model test accuracy: {}%".format(a*100))
         print("Model test recall (per class): {}".format(recall))
         print("Model test precision (per class): {}".format(precision))
     
     
-    
+        # these models have all epochs, the ones above used early stopping
         model_list = [
             {"name":"6vA", "outputs":1,                 "checkpoint":"final_checkpoints/all_6vA.pt"},
             {"name":"Weighted Multiclass", "outputs":7, "checkpoint":"final_checkpoints/final_weighted_multiclass.pt" },

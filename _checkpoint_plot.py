@@ -1,3 +1,5 @@
+# This file plots a checkpoint's loss or accuracy graphs
+
 # torch and specific torch packages for convenience
 import torch
 import torch.nn.functional as F

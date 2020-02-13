@@ -24,7 +24,7 @@ import copy
 import matplotlib.pyplot as plt
 import math
 
-from utils import Net, Im_Dataset, eval_accuracy, load_model, get_weights, weightedBCELoss
+from _utils import Net, Im_Dataset, eval_accuracy, load_model, get_weights, weightedBCELoss
 
 def train_model(model, optimizer, scheduler,loss_function,
                     datasets,positive_class,device, num_epochs=5, start_epoch = 0,
