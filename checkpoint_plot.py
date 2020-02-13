@@ -47,9 +47,9 @@ checkpoint = args.input
 all_losses,all_accs = load_model(checkpoint)
 
 plt.figure()
-plt.plot(all_accs['train'])
-plt.plot(all_accs['val'])
-plt.legend(["Train acc","Val acc"])
+plt.plot(all_losses['train'])
+plt.plot(all_losses['val'])
+plt.legend(["Train loss","Val loss"])
 plt.show()
 
 print("Best epoch for val loss: {}".format(np.argmax(all_losses['val'])))
